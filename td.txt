@@ -1,0 +1,15 @@
+Delphi 6: Projekteinstellungen prüfen. Debugging bei Extractor aus
+Versioninfo für alle Projekte
+MakeSFX.ico auch in 16x16 (ref: cdfview.dll)
+
+BUG:
+- W95 issue
+- Ungültige Resourcendatei...
+
+Sicherheitslücke
+- Der AutoRun kann eine unendliche Rekursion der Entpacker starten!
+  Wie kann man alle Variationen feststellen?
+
+???
+- Ist es möglich, dass erst Pwd-Dialog und dann Overwrite-Dialog kommt?
+=> Overwrite dialog soll nicht kommen bei "StopAskingPassword" + Verschlüsselt

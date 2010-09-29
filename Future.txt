@@ -1,0 +1,12 @@
+Spanned + empty Zip support
+
+Passwortunterstützung
+Also accept AES-128 and AES-256 encryption
+Auch VersionInfo und Icon änderbar machen lassen?
+	Ref: http://www.koders.com/delphi/fid30EAA2BB5080DE3BE66DA45AC10BD5DB3FE6D163.aspx?s=algorithm
+
+Test: Izarc, winrar, linux, w95, w7
+
+testen, was bei leerer zip passieren würde
+
+type TZMReplaceOpts = (rplConfirm, rplAlways, rplNewer, rplNever);

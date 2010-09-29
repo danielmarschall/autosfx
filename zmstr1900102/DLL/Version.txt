@@ -1,0 +1,2 @@
+http://www.delphizip.org/archives/229
+.088 compatibility test for win95

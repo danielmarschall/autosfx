@@ -1,0 +1,34 @@
+/* MakeExe.manifest.rc
+    machine generated 
+      by ZipHelper (c) 
+     Do NOT edit 
+  MakeExe.manifest.rc - resource script
+  ZipMaster by Chris Vleghert, Eric W. Engler, Roger Aelbrecht and Russell Peters
+  1.9.0
+  Copyright (C) 2010  Russell Peters
+ 
+    Copyright (C) 2009, 2010  by Russell J. Peters, Roger Aelbrecht,
+      Eric W. Engler and Chris Vleghert.
+ 
+	This file is part of TZipMaster Version 1.9.
+ 
+    TZipMaster is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+ 
+    TZipMaster is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+ 
+    You should have received a copy of the GNU Lesser General Public License
+    along with TZipMaster.  If not, see <http://www.gnu.org/licenses/>.
+ 
+    contact: problems@delphizip.org (include ZipMaster in the subject).
+    updates: http://www.delphizip.org
+    DelphiZip maillist subscribe at http://www.freelists.org/list/delphizip
+ 
+  generated 2 Sep 2010 8:25 AM
+---------------------------------------------------------------------------*/
+1 24 "MakeExe.manifest.xml"

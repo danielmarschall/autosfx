@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<PersonalityInfo>
+		<Option>
+			<Option Name="Personality">Default.Personality</Option>
+			<Option Name="ProjectType"></Option>
+			<Option Name="Version">1.0</Option>
+			<Option Name="GUID">{E1BA6B56-5778-43A0-AF42-DC7122B592C1}</Option>
+		</Option>
+	</PersonalityInfo>
+	<Default.Personality>  <Projects>
+      <Projects Name="MakeSFX.exe">MakeSFX.bdsproj</Projects>
+      <Projects Name="Extractor.exe">Extractor.bdsproj</Projects>
+      <Projects Name="RemoveSignature.exe">Tools\RemoveSignature.bdsproj</Projects>
+      <Projects Name="Targets">MakeSFX.exe Extractor.exe RemoveSignature.exe</Projects>
+    </Projects>
+    <Dependencies>
+      <Dependency GUID="{8898EE26-FD3B-48F3-9FCA-98CEB29ED880}">
+        <Dependency GUID="{71F7F818-8648-44EA-91E3-5D8118938664}"/>
+        <Dependency GUID="{0FC4EB51-8FDD-413A-858B-B9C317492712}"/>
+      </Dependency>
+    </Dependencies>
+  </Default.Personality>
+</BorlandProject>

@@ -1,0 +1,8 @@
+Packet changes by Daniel Marschall
+
+1. Upgraded DLL to B4 W95 compatibility build
+2. Pre-Fixed SFX-Freeze bug in ZMUtils19.pas ("HOTFIX-MARX-A")
+3. Pre-Fixed Garbage nag-dialog in ZMEOC19.pas ("HOTFIX-MARX-B")
+4. Pre-Fixed W95 Compatibility bug of DrawTextW() in ZMDlg19.pas ("HOTFIX-MARX-C")
+5. Included DLL\ResDLL-Maker\ (beside all DLL sources)
+6. DLL durch BCB6 build ersetzt (W95 compat)
