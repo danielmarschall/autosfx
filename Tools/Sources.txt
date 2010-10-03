@@ -6,3 +6,6 @@ http://sourceforge.net/projects/gnuwin32/files/zip/3.0/zip-3.0-dep.zip/download
 
 upx.exe
 http://upx.sourceforge.net/
+
+rc.dll, rcdll.dll
+Windows Server 2003 SP1 SDK

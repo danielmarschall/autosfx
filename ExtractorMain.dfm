@@ -67,6 +67,7 @@ object MainForm: TMainForm
     Font.Style = []
     ParentFont = False
     TabOrder = 1
+    TabStop = False
     OnClick = CancelBtnClick
   end
   object itemBar: TProgressBar
@@ -78,7 +79,6 @@ object MainForm: TMainForm
     TabOrder = 2
   end
   object AutoTimer: TTimer
-    Interval = 100
     OnTimer = AutoTimerTimer
     Left = 320
     Top = 8

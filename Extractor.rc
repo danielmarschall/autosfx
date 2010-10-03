@@ -1,0 +1,30 @@
+#include "resource.h"
+
+MAINICON ICON "Icons\RarSFX.ico"
+
+1 24 "Extractor.exe.manifest"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION 1, 0, 0, 0
+PRODUCTVERSION 1, 0, 0, 0
+FILEOS VOS_WINDOWS32 // 0x4
+FILETYPE VFT_APP // 0x1
+BEGIN
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040704E4"
+		BEGIN
+			VALUE "CompanyName", "ViaThinkSoft"
+			VALUE "FileDescription", "ViaThinkSoft AutoSFX Extractor"
+			VALUE "FileVersion", "1.0.0.0"
+			VALUE "InternalName", "AutoSFX Extractor"
+			VALUE "LegalCopyright", "© Copyright 2010 ViaThinkSoft"
+			VALUE "LegalTrademarks", "Keine"
+			VALUE "OriginalFilename", "Extractor.exe"
+			VALUE "ProductName", "ViaThinkSoft AutoSFX"
+			VALUE "ProductVersion", "1.0.0.0"
+			VALUE "Webseite", "www.viathinksoft.de"
+			VALUE "Projektleiter", "Daniel Marschall - www.daniel-marschall.de"
+		END
+	END
+END

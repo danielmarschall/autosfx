@@ -2,8 +2,6 @@ unit ExtractorMain;
 
 {$DEFINE USE_DZIP_UNPACK}
 
-// todo: compilerswitch, der auch selectdirectory() anzeigt (ohne foldercreate)
-
 interface
 
 uses
@@ -26,6 +24,8 @@ type
     procedure AutoTimerTimer(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
   private
+    ExtractionInProcess: boolean;
+    uz: TZipMaster19;
     RenamingOldPrefix: string;
     RenamingNewPrefix: string;
     zb: TZIPBehavior;
@@ -33,21 +33,21 @@ type
     AbortUnzip: boolean;
     StopAskingPassword: boolean;
     LastTriedPassword: string;
-    OverwriteDecision: TOverwriteDecision;
+    CachedOverwriteDecision: TOverwriteDecision;
     {$IFNDEF USE_DZIP_UNPACK}
     procedure ExtractDllFromResource(ADirectory: string);
     {$ENDIF}
     procedure ExtractZipHere(AZipfile: string);
-    procedure ArcExtFNChange(Sender: TObject; var FileName: TZMString; const BaseDir: TZMString; var IsChanged: Boolean);
-    procedure ArcProzess(Sender: TObject; details: TZMProgressDetails);
-    procedure ArcTick(Sender: TObject);
-    procedure ArcCheckTerminate(Sender: TObject; var abort: Boolean);
-    procedure ConfirmOverwrite(Sender: TObject; const ForFile: TZMString;
+    procedure EvExtFNChange(Sender: TObject; var FileName: TZMString; const BaseDir: TZMString; var IsChanged: Boolean);
+    procedure EvProgress(Sender: TObject; details: TZMProgressDetails);
+    procedure EvTick(Sender: TObject);
+    procedure EvCheckTerminate(Sender: TObject; var abort: Boolean);
+    procedure EvConfirmOverwrite(Sender: TObject; const ForFile: TZMString;
       IsOlder: Boolean; var DoOverwrite: Boolean; DirIndex: Integer);
-    procedure ArcPassword(Sender: TObject; IsZipAction: Boolean;
+    procedure EvPasswordEvent(Sender: TObject; IsZipAction: Boolean;
       var NewPassword: String; const ForFile: TZMString; var RepeatCount: Longword;
       var Action: TMsgDlgBtn);
-    procedure SkipEvent(Sender: TObject; const ForFile: TZMString;
+    procedure EvSkipEvent(Sender: TObject; const ForFile: TZMString;
       SkipType: TZMSkipTypes; var ExtError: Integer);
     function StripBaseDir(const s: string): string;
   end;
@@ -58,10 +58,11 @@ var
 implementation
 
 uses
-  ExtractorPassword, ExtractorError, Functions, SFXAutoRun, ExtractorComment;
+  ExtractorPassword, ExtractorError, Functions, SFXAutoRun, ExtractorComment,
+  BrowseFolder;
 
 const
-  MaxTries = 15;
+  EvPasswordTries = 15;
 
 {$R *.dfm}
 
@@ -143,12 +144,15 @@ end;
 
 procedure TMainForm.ExtractZipHere(AZipfile: string);
 var
-  uz: TZipMaster19;
   l: TStringList;
   s: string;
   ec: Integer;
   ar: TExecuteSFXAutoRunResult;
   GeneralBaseDir: string;
+const
+  C_Explorer_Open_Param = '"%s"';
+  C_Explorer_Select_Param = '/n,/select,"%s"';
+  EXPLORER_EXE = 'explorer';
 resourcestring
   Lng_Aborted = 'Der laufende Prozess wurde abgebrochen. Das extrahierten Dateien sind somit unvollständig.';
   Lng_Zip_Error = 'ZIP-Master Fehler "%s" (%d)';
@@ -160,8 +164,11 @@ begin
   RenamingOldPrefix := '';
   RenamingNewPrefix := '';
 
+  if Assigned(uz) then uz.Free; // uz ist global, damit AbortDLL aufgerufen werden kann
+
   uz := TZipMaster19.Create(nil);
   try
+    ExtractionInProcess := true;
     {$IFNDEF USE_DZIP_UNPACK}
     uz.DLLDirectory := GetTempDirectory + DelZipDLL_Name;
     {$ENDIF}
@@ -175,18 +182,14 @@ begin
     uz.ExtrOptions := [ExtrDirNames, ExtrOverWrite, ExtrFreshen, ExtrUpdate,
       ExtrForceDirs, ExtrNTFS];
 
-    if zb.ConflictBehavior <> cbAvoid then
-    begin
-      uz.OnExtractOverwrite := ConfirmOverwrite;
-    end;
-    uz.OnProgress := ArcProzess;
-    uz.OnTick := ArcTick;
-    uz.OnCheckTerminate := ArcCheckTerminate;
-    uz.OnPasswordError := ArcPassword;
-    uz.PasswordReqCount := MaxTries;
-    uz.OnSkipped := SkipEvent;
-    uz.OnSetExtName := ArcExtFNChange;
-    // TODO: Mehr events?
+    uz.OnExtractOverwrite := EvConfirmOverwrite;
+    uz.OnProgress := EvProgress;
+    uz.OnTick := EvTick;
+    uz.OnCheckTerminate := EvCheckTerminate;
+    uz.OnPasswordError := EvPasswordEvent;
+    uz.PasswordReqCount := EvPasswordTries;
+    uz.OnSkipped := EvSkipEvent;
+    uz.OnSetExtName := EvExtFNChange;
 
     // Find out base dirtory
 
@@ -202,10 +205,8 @@ begin
         end;
       etAsk:
         begin
-          if not AdvSelectDirectory(Lng_SelectDir, '', GeneralBaseDir, False, False, True) then
-          begin
-            Exit;
-          end;
+          GeneralBaseDir := MySelectDirectory(Lng_SelectDir);
+          if GeneralBaseDir = '' then Exit;
         end;
     end;
     GeneralBaseDir := IncludeTrailingPathDelimiter(GeneralBaseDir);
@@ -311,8 +312,9 @@ begin
         if DirectoryExists(s) then
         begin
           // If it is a folder, open it
-          ShellExecute(0, 'open', 'explorer',
-            PChar('"'+s+'"'), '', SW_NORMAL);
+
+          ShellExecute(0, 'open', EXPLORER_EXE,
+            PChar(Format(C_Explorer_Open_Param, [s])), '', SW_NORMAL);
         end
         else if FileExists(s) then
         begin
@@ -322,12 +324,15 @@ begin
           // Im Moment wird bei einem BESTEHENDEN Fenster
           // die Selektion nicht durchgeführt.
 
-          ShellExecute(0, 'open', 'explorer',
-            PChar('/n,/select,"'+s+'"'), '', SW_NORMAL);
+          ShellExecute(0, 'open', EXPLORER_EXE,
+            PChar(Format(C_Explorer_Select_Param, [s])), '', SW_NORMAL);
         end
         else
         begin
-          MessageDlg(Lng_Unknown_Error, mtError, [mbOk], 0);
+          if not AbortUnzip then
+          begin
+            MessageDlg(Lng_Unknown_Error, mtError, [mbOk], 0);
+          end;
         end;
       end;
     finally
@@ -335,10 +340,11 @@ begin
     end;
   finally
     uz.Free;
+    ExtractionInProcess := false;
   end;
 end;
 
-procedure TMainForm.ArcProzess(Sender: TObject; details: TZMProgressDetails);
+procedure TMainForm.EvProgress(Sender: TObject; details: TZMProgressDetails);
 begin
   CurrentFileLabel.Caption := details.ItemName;
 
@@ -351,7 +357,7 @@ begin
   Application.ProcessMessages;
 end;
 
-procedure TMainForm.ArcExtFNChange(Sender: TObject;
+procedure TMainForm.EvExtFNChange(Sender: TObject;
   var FileName: TZMString; const BaseDir: TZMString;
   var IsChanged: Boolean);
 begin
@@ -360,17 +366,17 @@ begin
   IsChanged := true;
 end;
 
-procedure TMainForm.ArcTick(Sender: TObject);
+procedure TMainForm.EvTick(Sender: TObject);
 begin
   Application.ProcessMessages;
 end;
 
-procedure TMainForm.ArcCheckTerminate(Sender: TObject; var abort: Boolean);
+procedure TMainForm.EvCheckTerminate(Sender: TObject; var abort: Boolean);
 begin
   abort := AbortUnzip;
 end;
 
-procedure TMainForm.ConfirmOverwrite(Sender: TObject; const ForFile: TZMString;
+procedure TMainForm.EvConfirmOverwrite(Sender: TObject; const ForFile: TZMString;
   IsOlder: Boolean; var DoOverwrite: Boolean; DirIndex: Integer);
 resourcestring
   Lng_Overwrite = 'Bestehende Datei "%s" überschreiben?';
@@ -397,27 +403,31 @@ begin
       Exit;
     end;
 
-    if OverwriteDecision = odUndefined then
+    if CachedOverwriteDecision = odUndefined then
     begin
       res := MessageDlg(Format(Lng_Overwrite, [ForFile]), mtConfirmation, [mbYes, mbNo, mbYesToAll, mbNoToAll], 0);
       DoOverwrite := (res = mrYes) or (res = mrYesToAll);
-      if res = mrNoToAll then OverwriteDecision := odOverwriteNothing;
-      if res = mrYesToAll then OverwriteDecision := odOverwriteAll;
+      if res = mrNoToAll then CachedOverwriteDecision := odOverwriteNothing;
+      if res = mrYesToAll then CachedOverwriteDecision := odOverwriteAll;
     end
     else
     begin
-      DoOverwrite := OverwriteDecision = odOverwriteAll;
+      DoOverwrite := CachedOverwriteDecision = odOverwriteAll;
     end;
+  end
+  else if zb.ConflictBehavior = cbAvoid then
+  begin
+    // Nothing to do
   end;
 end;
 
-procedure TMainForm.ArcPassword(Sender: TObject; IsZipAction: Boolean;
+procedure TMainForm.EvPasswordEvent(Sender: TObject; IsZipAction: Boolean;
   var NewPassword: String; const ForFile: TZMString; var RepeatCount: Longword;
   var Action: TMsgDlgBtn);
 var
   repc: integer;
 begin
-  repc := MaxTries - RepeatCount + 1;
+  repc := EvPasswordTries - RepeatCount + 1;
 
   // Eine Passworteingabe wurde abgebrochen. Frage nicht mehr nach.
   if StopAskingPassword then Exit;
@@ -439,7 +449,7 @@ begin
     end;
   end;
 
-  if PasswordDlg.ShowModal(StripBaseDir(ForFile), repc, MaxTries) = mrOk then
+  if PasswordDlg.ShowModal(StripBaseDir(ForFile), repc, EvPasswordTries) = mrOk then
   begin
     NewPassword := PasswordDlg.Password.Text;
     if NewPassword = '' then NewPassword := ' '; // Neue Eingabe erzwingen.
@@ -456,19 +466,34 @@ procedure TMainForm.CancelBtnClick(Sender: TObject);
 resourcestring
   Lng_AbortExtract = 'Extrahieren abbrechen?';
 begin
+  if not ExtractionInProcess then
+  begin
+    Close;
+    Exit;
+  end;
+
   if MessageDlg(Lng_AbortExtract, mtConfirmation, mbYesNoCancel, 0) = mrYes then
   begin
     CancelBtn.Enabled := false;
+    uz.AbortDLL;
     AbortUnzip := true;
+    // Close wird durch den Timer durchgeführt
+    Exit;
   end;
 end;
 
 procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
+  if not ExtractionInProcess then
+  begin
+    CanClose := true;
+    Exit;
+  end;
+
   if not AbortUnzip then
   begin
-    CancelBtn.Click;
     CanClose := false;
+    CancelBtn.Click;
   end;
 end;
 
@@ -565,7 +590,6 @@ begin
       end;
     end;
   finally
-    AbortUnzip := true; // Damit es zu keiner Abfrage in OnCloseQuery kommt
     Close;
   end;
 end;
@@ -577,7 +601,7 @@ begin
   result := Copy(s, Length(BaseDir)+1, Length(s)-Length(BaseDir));
 end;
 
-procedure TMainForm.SkipEvent(Sender: TObject; const ForFile: TZMString;
+procedure TMainForm.EvSkipEvent(Sender: TObject; const ForFile: TZMString;
   SkipType: TZMSkipTypes; var ExtError: Integer);
 resourcestring
   Lng_PasswordWrong = 'Das Passwort wurde zu oft falsch eingegeben. Die Datei "%s" wird nicht extrahiert.';

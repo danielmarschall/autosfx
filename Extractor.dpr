@@ -14,7 +14,8 @@ uses
   ExtractorComment in 'ExtractorComment.pas' {CommentForm},
   Functions in 'Functions.pas',
   SFXAutoRun in 'SFXAutoRun.pas',
-  SFXBehavior in 'SFXBehavior.pas';
+  SFXBehavior in 'SFXBehavior.pas',
+  BrowseFolder in 'BrowseFolder.pas';
 
 {$R *.res}
 

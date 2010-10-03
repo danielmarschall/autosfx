@@ -1,3 +1,9 @@
+sfxmaker ohne argumente: datei open dialog + folder selection dialog
+
+wenn sich das sfx auf cd oder diskette befindet, auf desktop oder ASK extrahieren
+
+Kompatibel mit Filenameencryption?
+
 - ein besseres win7 highres icon machen?
 - spanned sfx possible?
 test 2files, 1file, 1folder
