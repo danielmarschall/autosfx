@@ -9,6 +9,12 @@ Benefits
 * Compatible with AuthentiCode
 * Compatible with Windows 7
 * Compatible with Windows 95
+* Accepts encrypted files (currently only ZIP 2.0 Standard)
+
+Currently not supported
+-----------------------
+
+* AES-Encryption (128, 256 Bit)
 
 Current overhead
 ----------------
@@ -44,7 +50,7 @@ Behavior
 --------
 
 ZIP has 1 file
-	=> Extract in the same directory as the SFX
+	=> Extract DIRECTLY in the specified directory
 	Is it a directory?
 		=> Open the new directory in Windows Explorer
 	is it a file?
@@ -65,15 +71,22 @@ Following switches are possible:
   C_ASFX_CB_OVR = 'AutoSFX Conflict Behavior: Overwrite all';
   C_ASFX_CB_NEW = 'AutoSFX Conflict Behavior: Overwrite older';
   C_ASFX_CB_ASK = 'AutoSFX Conflict Behavior: Ask';
-  C_ASFX_CB_AVO = 'AutoSFX Conflict Behavior: Avoid';
+  C_ASFX_CB_AVO = 'AutoSFX Conflict Behavior: Avoid'; (default)
 
   C_ASFX_CP_BEF = 'AutoSFX Comment Presentation: Before extracting';
   C_ASFX_CP_AFT = 'AutoSFX Comment Presentation: After extracting';
-  C_ASFX_CP_NON = 'AutoSFX Comment Presentation: None';
+  C_ASFX_CP_NON = 'AutoSFX Comment Presentation: None'; (default)
 
-  C_ASFX_FC_THS = 'AutoSFX Extraction Target: Extract here';
+  C_ASFX_FC_THS = 'AutoSFX Extraction Target: Extract here'; (default)
   C_ASFX_FC_DSK = 'AutoSFX Extraction Target: Extract to Desktop';
   C_ASFX_FC_ASK = 'AutoSFX Extraction Target: Choose directory';
+
+Note: If you are running the SFX from a CD-Rom, a write-protected
+directory or a flobby (doesn't matter if it is write-protected!),
+the extraction "Here" will be ignored and converted into "Desktop".
+
+Note: "Avoid" means that an alternative file/foldername will be
+determinated.
 
 Special AutoRun.inf
 -------------------

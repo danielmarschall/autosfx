@@ -2,8 +2,8 @@ object ErrorForm: TErrorForm
   Left = 222
   Top = 133
   Caption = 'Fehler'
-  ClientHeight = 363
-  ClientWidth = 353
+  ClientHeight = 406
+  ClientWidth = 583
   Color = clBtnFace
   Font.Charset = ANSI_CHARSET
   Font.Color = clWindowText

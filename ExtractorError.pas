@@ -2,8 +2,11 @@ unit ExtractorError;
 
 interface
 
+// TODO: Richtige Ordnerliste mit Icons anzeigen?
+
 uses
-  Forms, StdCtrls, ExtCtrls, Controls, Graphics, Classes, Dialogs;
+  Forms, StdCtrls, ExtCtrls, Controls, Graphics, Classes, Dialogs,
+  ZipMstr19, SysUtils;
 
 type
   TErrorForm = class(TForm)
@@ -17,7 +20,7 @@ type
     procedure SaveBtnClick(Sender: TObject);
   public
     function ErrorsAvailable: boolean;
-    procedure NewError(Filename: string);
+    procedure NewError(Filename: string; SkipType: TZMSkipTypes);
   end;
 
 var
@@ -26,6 +29,30 @@ var
 implementation
 
 {$R *.dfm}
+
+function SkipTypeToStr(SkipType: TZMSkipTypes): string;
+begin
+  case SkipType of
+    stOnFreshen:           result := 'stOnFreshen';
+    stNoOverwrite:         result := 'stNoOverwrite';
+    stFileExists:          result := 'stFileExists';
+    stBadPassword:         result := 'stBadPassword';
+    stBadName:             result := 'stBadName';
+    stCompressionUnknown:  result := 'stCompressionUnknown';
+    stUnknownZipHost:      result := 'stUnknownZipHost';
+    stZipFileFormatWrong:  result := 'stZipFileFormatWrong';
+    stGeneralExtractError: result := 'stGeneralExtractError';
+    stUser:                result := 'stUser';
+    stCannotDo:            result := 'stCannotDo';
+    stNotFound:            result := 'stNotFound';
+    stNoShare:             result := 'stNoShare';
+    stNoAccess:            result := 'stNoAccess';
+    stNoOpen:              result := 'stNoOpen';
+    stDupName:             result := 'stDupName';
+    stReadError:           result := 'stReadError';
+    stSizeChange:          result := 'stSizeChange';
+  end;
+end;
 
 function TErrorForm.ErrorsAvailable: boolean;
 begin
@@ -41,10 +68,12 @@ begin
   SaveBtn.Top := OkBtn.Top;
 end;
 
-procedure TErrorForm.NewError(Filename: string);
+procedure TErrorForm.NewError(Filename: string; SkipType: TZMSkipTypes);
+resourcestring
+  Lng_Err_Entry = '%s (Grund: %s)';
 begin
   // In future: Also add reason into list?
-  ErrorList.Items.Add(Filename);
+  ErrorList.Items.Add(Format(Lng_Err_Entry, [Filename, SkipTypeToStr(SkipType)]));
 end;
 
 procedure TErrorForm.SaveBtnClick(Sender: TObject);

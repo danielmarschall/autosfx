@@ -19,6 +19,8 @@ function ExtractFileNameWithoutExt(const fil: string): string;
 function SearchNextFreeName(s: string; wantDir: boolean): string;
 function GetSpecialFolderPath(const Folder: integer): string;
 function IsExtractable(AFilename: string): boolean;
+function IsDirectoryWritable(const Dir: String): Boolean;
+function IsAtFlobbyDisk(AFileOrDir: string): boolean;
 
 implementation
 
@@ -220,6 +222,27 @@ begin
   finally
     uz.Free;
   end;
+end;
+
+// Ref: http://www.delphiarea.com/articles/how-to-find-if-a-directory-is-writable/
+function IsDirectoryWritable(const Dir: String): Boolean;
+var
+  TempFile: array[0..MAX_PATH] of Char;
+begin
+  if GetTempFileName(PChar(Dir), 'DA', 0, TempFile) <> 0 then
+    Result := Windows.DeleteFile(TempFile)
+  else
+    Result := False;
+end;
+
+function IsAtFlobbyDisk(AFileOrDir: string): boolean;
+var
+  s: string;
+begin
+  s := ExtractFileDrive(AFileOrDir);
+  s := UpperCase(s);
+
+  result := (s = 'A:') or (s = 'B:');
 end;
 
 end.

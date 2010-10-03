@@ -1,6 +1,6 @@
 unit ExtractorMain;
 
-{$DEFINE USE_DZIP_UNPACK}
+{$DEFINE USE_DZIP_UNPACK} // recommended
 
 interface
 
@@ -149,6 +149,7 @@ var
   ec: Integer;
   ar: TExecuteSFXAutoRunResult;
   GeneralBaseDir: string;
+  ok: boolean;
 const
   C_Explorer_Open_Param = '"%s"';
   C_Explorer_Select_Param = '/n,/select,"%s"';
@@ -159,6 +160,7 @@ resourcestring
   Lng_AutoRunFailed = 'SFX-AutoRun fehlgeschlagen. Die entpackten Inhalte werden nun angezeigt.';
   Lng_Unknown_Error = 'Unbekannter Fehler: Dateien sind nicht aufzufinden!';
   Lng_SelectDir = 'Bitte wählen Sie ein Verzeichnis zum Extrahieren aus. Es wird maximal 1 Datei bzw. Ordner erstellt!';
+  Lng_WriteProtected = 'Das Verzeichnis ist nicht schreibbar! Bitte wählen Sie ein Anderes.';
 begin
   AZipfile := ExpandUNCFileName(AZipfile);
   RenamingOldPrefix := '';
@@ -194,21 +196,43 @@ begin
     // Find out base dirtory
 
     GeneralBaseDir := '';
-    case zb.ExtractionTarget of
-      etExtractHere:
-        begin
-          GeneralBaseDir := ExtractFilePath(AZipfile); // Default
-        end;
-      etDesktop:
-        begin
-          GeneralBaseDir := GetSpecialFolderPath(CSIDL_DESKTOP);
-        end;
-      etAsk:
-        begin
-          GeneralBaseDir := MySelectDirectory(Lng_SelectDir);
-          if GeneralBaseDir = '' then Exit;
-        end;
+
+    if zb.ExtractionTarget = etExtractHere then
+    begin
+      GeneralBaseDir := ExtractFilePath(AZipfile); // Default
+
+      if not IsDirectoryWritable(GeneralBaseDir) or
+         IsAtFlobbyDisk(GeneralBaseDir) then
+      begin
+        zb.ExtractionTarget := etDesktop;
+      end;
     end;
+
+    if zb.ExtractionTarget = etDesktop then
+    begin
+      GeneralBaseDir := GetSpecialFolderPath(CSIDL_DESKTOP);
+
+      if not IsDirectoryWritable(GeneralBaseDir) or
+         IsAtFlobbyDisk(GeneralBaseDir) then
+      begin
+        zb.ExtractionTarget := etAsk;
+      end;
+    end;
+
+    if zb.ExtractionTarget = etAsk then
+    begin
+      repeat
+        GeneralBaseDir := MySelectDirectory(Lng_SelectDir);
+        if GeneralBaseDir = '' then Exit;
+
+        ok := IsDirectoryWritable(GeneralBaseDir);
+        if not ok then
+        begin
+          MessageDlg(Lng_WriteProtected, mtWarning, [mbOk], 0);
+        end;
+      until ok;
+    end;
+
     GeneralBaseDir := IncludeTrailingPathDelimiter(GeneralBaseDir);
 
     // Semantic scanning of ZIP to determinate the final extraction directory
@@ -285,6 +309,7 @@ begin
 
       if ErrorForm.ErrorsAvailable then
       begin
+        Hide;
         ErrorForm.ShowModal;
       end;
 
@@ -611,7 +636,7 @@ begin
     MessageDlg(Format(Lng_PasswordWrong, [ForFile]), mtError, [mbOk], 0);
     LastTriedPassword := '';
   end;
-  ErrorForm.NewError(StripBaseDir(ForFile));
+  ErrorForm.NewError(ForFile, SkipType);
 end;
 
 end.

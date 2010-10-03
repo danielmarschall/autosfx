@@ -10,3 +10,7 @@ Test: Izarc, winrar, linux, w95, w7
 testen, was bei leerer zip passieren würde
 
 type TZMReplaceOpts = (rplConfirm, rplAlways, rplNewer, rplNever);
+
+Bei MakeSFX.exe vorher einen Extraktionstest durchführen? (um z.B. Compressionsfehler etc. auszuschließen?)
+
+Einen ZIP-Packer/Modifier, der auch korrekte Kommentare erstellt (Checkboxes zur Unterstützung) machen?
