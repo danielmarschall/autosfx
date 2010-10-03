@@ -41,7 +41,7 @@ const
   C_ASFX_ET_DES = 'AutoSFX Extraction Target: Extract to Desktop';
   C_ASFX_ET_ASK = 'AutoSFX Extraction Target: Choose directory';
 
-  EINRUECK      = '> '; // Optional
+  EINRUECK      = '> '; // Optional to all C_ASFX
 
 const
   CB_DEFAULT = cbAvoid;
@@ -109,12 +109,15 @@ end;
 
 function StripBehavior(c: string): string;
 
-  procedure StripIt(s: string);
+  procedure StripIt(s: string; allowEinrueck: boolean);
   begin
-    c := StringReplace(c, EINRUECK + s+#13#10, '', [rfReplaceAll, rfIgnoreCase]);
-    c := StringReplace(c, EINRUECK + s+#13,    '', [rfReplaceAll, rfIgnoreCase]);
-    c := StringReplace(c, EINRUECK + s+#10,    '', [rfReplaceAll, rfIgnoreCase]);
-    c := StringReplace(c, EINRUECK + s,        '', [rfReplaceAll, rfIgnoreCase]);
+    if allowEinrueck then
+    begin
+      c := StringReplace(c, EINRUECK + s+#13#10, '', [rfReplaceAll, rfIgnoreCase]);
+      c := StringReplace(c, EINRUECK + s+#13,    '', [rfReplaceAll, rfIgnoreCase]);
+      c := StringReplace(c, EINRUECK + s+#10,    '', [rfReplaceAll, rfIgnoreCase]);
+      c := StringReplace(c, EINRUECK + s,        '', [rfReplaceAll, rfIgnoreCase]);
+    end;
 
     c := StringReplace(c, s+#13#10, '', [rfReplaceAll, rfIgnoreCase]);
     c := StringReplace(c, s+#13,    '', [rfReplaceAll, rfIgnoreCase]);
@@ -123,20 +126,20 @@ function StripBehavior(c: string): string;
   end;
 
 begin
-  StripIt(C_SIGNATURE);
+  StripIt(C_SIGNATURE, false);
 
-  StripIt(C_ASFX_CB_AVO);
-  StripIt(C_ASFX_CB_OVR);
-  StripIt(C_ASFX_CB_NEW);
-  StripIt(C_ASFX_CB_ASK);
+  StripIt(C_ASFX_CB_AVO, true);
+  StripIt(C_ASFX_CB_OVR, true);
+  StripIt(C_ASFX_CB_NEW, true);
+  StripIt(C_ASFX_CB_ASK, true);
 
-  StripIt(C_ASFX_CP_NON);
-  StripIt(C_ASFX_CP_BEF);
-  StripIt(C_ASFX_CP_AFT);
+  StripIt(C_ASFX_CP_NON, true);
+  StripIt(C_ASFX_CP_BEF, true);
+  StripIt(C_ASFX_CP_AFT, true);
 
-  StripIt(C_ASFX_ET_HER);
-  StripIt(C_ASFX_ET_DES);
-  StripIt(C_ASFX_ET_ASK);
+  StripIt(C_ASFX_ET_HER, true);
+  StripIt(C_ASFX_ET_DES, true);
+  StripIt(C_ASFX_ET_ASK, true);
 
   result := c;
 end;

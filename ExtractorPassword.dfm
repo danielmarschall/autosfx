@@ -7,7 +7,11 @@ object PasswordDlg: TPasswordDlg
   ClientHeight = 140
   ClientWidth = 290
   Color = clBtnFace
-  ParentFont = True
+  Font.Charset = ANSI_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'MS Sans Serif'
+  Font.Style = []
   OldCreateOrder = True
   Position = poMainFormCenter
   OnShow = FormShow
@@ -16,14 +20,14 @@ object PasswordDlg: TPasswordDlg
   object PwEnterLabel: TLabel
     Left = 8
     Top = 56
-    Width = 120
+    Width = 117
     Height = 13
     Caption = 'Bitte Passwort eingeben.'
   end
   object FileLabel: TLabel
     Left = 8
     Top = 6
-    Width = 29
+    Width = 28
     Height = 13
     Caption = 'Datei:'
   end

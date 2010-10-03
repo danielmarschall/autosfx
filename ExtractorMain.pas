@@ -1,17 +1,15 @@
 unit ExtractorMain;
 
-{$DEFINE DEBUG_MODE}
-
 {$DEFINE USE_DZIP_UNPACK}
 
-// TODO: Implement ExtractionTarget switch
+// todo: compilerswitch, der auch selectdirectory() anzeigt (ohne foldercreate)
 
 interface
 
 uses
   Windows, SysUtils, Classes, Controls, Forms, Dialogs, StdCtrls, ShellAPI,
   ExtCtrls, ComCtrls, ZipMstr19, ZMMsgStr19, ZMMsg19, ZMDelZip19,
-  ZMCompat19, SFXBehavior;
+  ZMCompat19, SFXBehavior, ShlObj;
 
 type
   TOverwriteDecision = (odUndefined, odOverwriteAll, odOverwriteNothing);
@@ -150,11 +148,13 @@ var
   s: string;
   ec: Integer;
   ar: TExecuteSFXAutoRunResult;
+  GeneralBaseDir: string;
 resourcestring
   Lng_Aborted = 'Der laufende Prozess wurde abgebrochen. Das extrahierten Dateien sind somit unvollständig.';
   Lng_Zip_Error = 'ZIP-Master Fehler "%s" (%d)';
   Lng_AutoRunFailed = 'SFX-AutoRun fehlgeschlagen. Die entpackten Inhalte werden nun angezeigt.';
   Lng_Unknown_Error = 'Unbekannter Fehler: Dateien sind nicht aufzufinden!';
+  Lng_SelectDir = 'Bitte wählen Sie ein Verzeichnis zum Extrahieren aus. Es wird maximal 1 Datei bzw. Ordner erstellt!';
 begin
   AZipfile := ExpandUNCFileName(AZipfile);
   RenamingOldPrefix := '';
@@ -184,9 +184,33 @@ begin
     uz.OnCheckTerminate := ArcCheckTerminate;
     uz.OnPasswordError := ArcPassword;
     uz.PasswordReqCount := MaxTries;
-    // TODO: Mehr events?
     uz.OnSkipped := SkipEvent;
     uz.OnSetExtName := ArcExtFNChange;
+    // TODO: Mehr events?
+
+    // Find out base dirtory
+
+    GeneralBaseDir := '';
+    case zb.ExtractionTarget of
+      etExtractHere:
+        begin
+          GeneralBaseDir := ExtractFilePath(AZipfile); // Default
+        end;
+      etDesktop:
+        begin
+          GeneralBaseDir := GetSpecialFolderPath(CSIDL_DESKTOP);
+        end;
+      etAsk:
+        begin
+          if not AdvSelectDirectory(Lng_SelectDir, '', GeneralBaseDir, False, False, True) then
+          begin
+            Exit;
+          end;
+        end;
+    end;
+    GeneralBaseDir := IncludeTrailingPathDelimiter(GeneralBaseDir);
+
+    // Semantic scanning of ZIP to determinate the final extraction directory
 
     l := TStringList.Create;
     try
@@ -202,23 +226,25 @@ begin
       else if l.Count = 1 then
       begin
         // 1 Object = Extract it right here!
-        s := ExtractFilePath(AZipfile) + l.Strings[0];
-        BaseDir := ExtractFilePath(AZipfile);
-        RenamingOldPrefix := StripBaseDir(S);
+        BaseDir := GeneralBaseDir;
+        s := BaseDir + l.Strings[0];
+
+        RenamingOldPrefix := l.Strings[0]; // = StripBaseDir(S);
+
         if zb.ConflictBehavior = cbAvoid then
         begin
-          s := SearchNextFreeName(s);
+          s := SearchNextFreeName(s, LooksLikeDir(s));
         end;
-        // TODO: helloworld.exe schlägt fehl!
-        RenamingNewPrefix := StripBaseDir(S); // We need to change the name!
+
+        RenamingNewPrefix := StripBaseDir(s);
       end
       else
       begin
         // 2+ Objects = Extract them in a separate folder
-        s := ChangeFileExt(AZipfile, '');
+        s := GeneralBaseDir + ExtractFileNameWithoutExt(AZipfile) + PathDelim;
         if zb.ConflictBehavior = cbAvoid then
         begin
-          s := SearchNextFreeName(s);
+          s := SearchNextFreeName(s, true);
           MkDir(s);
         end
         else
@@ -229,7 +255,7 @@ begin
       end;
       BaseDir := IncludeTrailingPathDelimiter(BaseDir);
 
-      uz.ExtrBaseDir := BaseDir; // TODO: andere ordner erlauben
+      uz.ExtrBaseDir := BaseDir;
 
       // Pre-Extract-Dialog
 
@@ -329,8 +355,7 @@ procedure TMainForm.ArcExtFNChange(Sender: TObject;
   var FileName: TZMString; const BaseDir: TZMString;
   var IsChanged: Boolean);
 begin
-  if RenamingOldPrefix = RenamingOldPrefix then Exit;
-
+  if RenamingOldPrefix = RenamingNewPrefix then Exit;
   FileName := RenamingNewPrefix + Copy(FileName, 1+Length(RenamingOldPrefix), Length(FileName)-Length(RenamingOldPrefix));
   IsChanged := true;
 end;
@@ -451,9 +476,6 @@ procedure TMainForm.FormCreate(Sender: TObject);
 resourcestring
   Lng_Extracting = 'Extrahiere Dateien. Bitte warten...';
 begin
-  {$IFDEF DEBUG_MODE}
-  Caption := Caption + ' (Debug)';
-  {$ENDIF}
   WaitLabel.Caption := Lng_Extracting;
   WaitLabel.Left := progressBar.Width div 2 - WaitLabel.Width div 2;
   CurrentFileLabel.Caption := '';
@@ -500,6 +522,10 @@ end;
 {$ENDIF}
 
 procedure TMainForm.AutoTimerTimer(Sender: TObject);
+resourcestring
+  Lng_NakedSFX = 'Das selbstentpackende Archiv (SFX) beschädigt oder ungültig. Wenn Sie diese Datei aus dem Internet bezogen haben, laden Sie sie bitte erneut herunter.';
+  Lng_FileNotFound = 'Die durch Parameter angegebene Datei "%s" kann nicht gefunden werden!';
+  Lng_TooManyArguments = 'Zu viele Argumente!';
 begin
   AutoTimer.Enabled := false;
 
@@ -508,22 +534,38 @@ begin
   {$ENDIF}
 
   try
-    {$IFDEF DEBUG_MODE}
-    if FileExists(ParamStr(1)) then
+    if IsExtractable(ParamStr(0)) then
     begin
-      ExtractZipHere(ParamStr(1));
+      ExtractZipHere(ParamStr(0));
     end
     else
     begin
-    {$ENDIF}
+      // Der Extractor ist "nackt" oder das SFX beschädigt
 
-    ExtractZipHere(ParamStr(0));
-
-    {$IFDEF DEBUG_MODE}
+      if ParamCount = 0 then
+      begin
+        MessageDlg(Lng_NakedSFX, mtError, [mbOk], 0);
+      end
+      else if ParamCount = 1 then
+      begin
+        // In diesem Zustand erlauben wir, fremde SFX zu entpacken (auch für Debugging-Zwecke)
+        if FileExists(ParamStr(1)) then
+        begin
+          ExtractZipHere(ParamStr(1));
+        end
+        else
+        begin
+          MessageDlg(Lng_FileNotFound, mtError, [mbOk], 0);
+        end;
+      end
+      else if ParamCount = 2 then
+      begin
+        // Future: Mehr als nur 1 Parameter erlauben?
+        MessageDlg(Lng_TooManyArguments, mtError, [mbOk], 0);
+      end;
     end;
-    {$ENDIF}
   finally
-    AbortUnzip := true; // Damit es zu keiner Abfrage kommt
+    AbortUnzip := true; // Damit es zu keiner Abfrage in OnCloseQuery kommt
     Close;
   end;
 end;

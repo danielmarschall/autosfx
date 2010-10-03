@@ -3,7 +3,8 @@ unit Functions;
 interface
 
 uses
-  Windows, Classes, SysUtils, ShellAPI;
+  Forms, Windows, Classes, SysUtils, ShellAPI, ShlObj, ActiveX,
+  ZipMstr19, ZmUtils19;
 
 type
   TLineBreak = (lbWindows, lbLinux, lbMac);
@@ -15,7 +16,12 @@ function LooksLikeDir(s: string): boolean;
 function GetTempDirectory: String;
 function NormalizeLineBreaks(s: string; mode: TLineBreak): string;
 function ExtractFileNameWithoutExt(const fil: string): string;
-function SearchNextFreeName(s: string): string;
+function SearchNextFreeName(s: string; wantDir: boolean): string;
+function AdvSelectDirectory(const Caption: string; const Root: WideString;
+  var Directory: string; EditBox: Boolean = False; ShowFiles: Boolean = False;
+  AllowCreateDirs: Boolean = True): Boolean;
+function GetSpecialFolderPath(const Folder: integer): string;
+function IsExtractable(AFilename: string): boolean;
 
 implementation
 
@@ -150,33 +156,178 @@ begin
   result := Copy(ExtractFileName(fil), 1, Length(ExtractFileName(fil))-Length(ExtractFileExt(fil)));
 end;
 
-function SearchNextFreeName(s: string): string;
+function SearchNextFreeName(s: string; wantDir: boolean): string;
 var
   i: integer;
 begin
   if not FileExists(s) and not DirectoryExists(s) then
   begin
     result := s;
+    if wantDir then result := IncludeTrailingPathDelimiter(result);
     Exit;
   end;
 
   i := 2;
 
-  if FileExists(s) then
-  begin
-    repeat
-      result := Format('%s (%d)%s', [ExtractFileNameWithoutExt(s), i, ExtractFileExt(s)]);
-      inc(i);
-    until not DirectoryExists(result);
-  end
-  else if DirectoryExists(s) then
+  if wantDir then
   begin
     s := ExcludeTrailingPathDelimiter(s);
     repeat
       result := Format('%s (%d)', [s, i]);
       inc(i);
-    until not DirectoryExists(result);                  // Todo: Legt man sich hier nun auf einen ordnernamen fest???
+    until not DirectoryExists(result) and not FileExists(result);
     result := IncludeTrailingPathDelimiter(result);
+  end
+  else
+  begin
+    repeat
+      result := Format('%s (%d)%s', [ExtractFilePath(s)+ExtractFileNameWithoutExt(s), i, ExtractFileExt(s)]);
+      inc(i);
+    until not DirectoryExists(result) and not FileExists(result);
+  end;
+end;
+
+{
+  This code shows the SelectDirectory dialog with additional expansions:
+  - an edit box, where the user can type the path name,
+  - also files can appear in the list,
+  - a button to create new directories.
+
+
+  Dieser Code zeigt den SelectDirectory-Dialog mit zusätzlichen Erweiterungen:
+  - eine Edit-Box, wo der Benutzer den Verzeichnisnamen eingeben kann,
+  - auch Dateien können in der Liste angezeigt werden,
+  - eine Schaltfläche zum Erstellen neuer Verzeichnisse.
+
+
+  Ref: http://www.swissdelphicenter.ch/de/showcode.php?id=1802
+}
+
+function AdvSelectDirectory(const Caption: string; const Root: WideString;
+  var Directory: string; EditBox: Boolean = False; ShowFiles: Boolean = False;
+  AllowCreateDirs: Boolean = True): Boolean;
+  // callback function that is called when the dialog has been initialized
+  //or a new directory has been selected
+
+  // Callback-Funktion, die aufgerufen wird, wenn der Dialog initialisiert oder
+  //ein neues Verzeichnis selektiert wurde
+  function SelectDirCB(Wnd: HWND; uMsg: UINT; lParam, lpData: lParam): Integer;
+    stdcall;
+//  var
+//    PathName: array[0..MAX_PATH] of Char;
+  begin
+    case uMsg of
+      BFFM_INITIALIZED: SendMessage(Wnd, BFFM_SETSELECTION, Ord(True), Integer(lpData));
+      // include the following comment into your code if you want to react on the
+      //event that is called when a new directory has been selected
+      // binde den folgenden Kommentar in deinen Code ein, wenn du auf das Ereignis
+      //reagieren willst, das aufgerufen wird, wenn ein neues Verzeichnis selektiert wurde
+      {BFFM_SELCHANGED:
+      begin
+        SHGetPathFromIDList(PItemIDList(lParam), @PathName);
+        // the directory "PathName" has been selected
+        // das Verzeichnis "PathName" wurde selektiert
+      end;}
+    end;
+    Result := 0;
+  end;
+var
+  WindowList: Pointer;
+  BrowseInfo: TBrowseInfo;
+  Buffer: PChar;
+  RootItemIDList, ItemIDList: PItemIDList;
+  ShellMalloc: IMalloc;
+  IDesktopFolder: IShellFolder;
+  Eaten, Flags: LongWord;
+const
+  // necessary for some of the additional expansions
+  // notwendig für einige der zusätzlichen Erweiterungen
+  BIF_USENEWUI = $0040;
+  BIF_NOCREATEDIRS = $0200;
+begin
+  Result := False;
+  if not DirectoryExists(Directory) then
+    Directory := '';
+  FillChar(BrowseInfo, SizeOf(BrowseInfo), 0);
+  if (ShGetMalloc(ShellMalloc) = S_OK) and (ShellMalloc <> nil) then
+  begin
+    Buffer := ShellMalloc.Alloc(MAX_PATH);
+    try
+      RootItemIDList := nil;
+      if Root <> '' then
+      begin
+        SHGetDesktopFolder(IDesktopFolder);
+        IDesktopFolder.ParseDisplayName(Application.Handle, nil,
+          POleStr(Root), Eaten, RootItemIDList, Flags);
+      end;
+      OleInitialize(nil);
+      with BrowseInfo do
+      begin
+        hwndOwner := Application.Handle;
+        pidlRoot := RootItemIDList;
+        pszDisplayName := Buffer;
+        lpszTitle := PChar(Caption);
+        // defines how the dialog will appear:
+        // legt fest, wie der Dialog erscheint:
+        ulFlags := BIF_RETURNONLYFSDIRS or BIF_USENEWUI or
+          BIF_EDITBOX * Ord(EditBox) or BIF_BROWSEINCLUDEFILES * Ord(ShowFiles) or
+          BIF_NOCREATEDIRS * Ord(not AllowCreateDirs);
+        lpfn    := @SelectDirCB;
+        if Directory <> '' then
+          lParam := Integer(PChar(Directory));
+      end;
+      WindowList := DisableTaskWindows(0);
+      try
+        ItemIDList := ShBrowseForFolder(BrowseInfo);
+      finally
+        EnableTaskWindows(WindowList);
+      end;
+      Result := ItemIDList <> nil;
+      if Result then
+      begin
+        ShGetPathFromIDList(ItemIDList, Buffer);
+        ShellMalloc.Free(ItemIDList);
+        Directory := Buffer;
+      end;
+    finally
+      ShellMalloc.Free(Buffer);
+    end;
+  end;
+end;
+
+function GetSpecialFolderPath(const Folder: integer): string;
+var
+  PIDL: PItemIDList;
+  Path: array[0..MAX_PATH] of char;
+  Malloc: IMalloc;
+begin
+  Path := '';
+  if Succeeded((SHGetSpecialFolderLocation(0, Folder, PIDL))) then
+    if (SHGetPathFromIDList(PIDL, Path)) then
+      if Succeeded(ShGetMalloc(Malloc)) then
+      begin
+        Malloc.Free(PIDL);
+        Malloc := nil;
+      end;
+  Result := Path;
+end;
+
+function IsExtractable(AFilename: string): boolean;
+var
+  q: integer;
+  uz: TZipMaster19;
+begin
+  // TODO: Ist die Funktion gut? Fraglich, ob EOC64 ein Teil von EOC ist.
+  uz := TZipMaster19.Create(nil);
+  try
+    q := uz.QueryZip(AFilename);
+    result := true;
+    if (q and zqbHasLocal) <> zqbHasLocal then result := false;
+    if (q and zqbHasCentral) <> zqbHasCentral then result := false;
+    if ((q and zqbHasEOC) <> zqbHasEOC) and
+       ((q and zqbHasEOC64) <> zqbHasEOC) then result := false;
+  finally
+    uz.Free;
   end;
 end;
 

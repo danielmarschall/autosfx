@@ -5,10 +5,10 @@ object CommentForm: TCommentForm
   ClientHeight = 499
   ClientWidth = 521
   Color = clBtnFace
-  Font.Charset = DEFAULT_CHARSET
+  Font.Charset = ANSI_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
-  Font.Name = 'Tahoma'
+  Font.Name = 'MS Sans Serif'
   Font.Style = []
   OldCreateOrder = False
   Position = poMainFormCenter
@@ -38,7 +38,13 @@ object CommentForm: TCommentForm
     Height = 25
     Caption = 'OK'
     Default = True
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'MS Sans Serif'
+    Font.Style = []
     ModalResult = 1
+    ParentFont = False
     TabOrder = 0
   end
   object CancelBtn: TButton
@@ -48,7 +54,13 @@ object CommentForm: TCommentForm
     Height = 25
     Cancel = True
     Caption = 'Abbrechen'
+    Font.Charset = ANSI_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'MS Sans Serif'
+    Font.Style = []
     ModalResult = 2
+    ParentFont = False
     TabOrder = 1
   end
 end

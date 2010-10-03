@@ -1,3 +1,9 @@
+- ein besseres win7 highres icon machen?
+- spanned sfx possible?
+test 2files, 1file, 1folder
+righttrim on commentwindow
+
+
 Delphi 6: Projekteinstellungen prüfen. Debugging bei Extractor aus
 Versioninfo für alle Projekte
 MakeSFX.ico auch in 16x16 (ref: cdfview.dll)
