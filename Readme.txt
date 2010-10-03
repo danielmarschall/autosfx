@@ -15,6 +15,14 @@ Current overhead
 
 458 KB (Delphi 2006)
 
+Cancel
+------
+
+Press ESC to cancel.
+
+The program waits 1 second before starting extraction (Prevention of malicious
+AutoRun's, which call the creator SFX in an infinite loop)
+
 Structure of a ViaThinkSoft AutoSFX Archive
 -------------------------------------------
 
@@ -80,8 +88,6 @@ OpenUnzippedContent=true	; After we have opened the application, should we still
 
 More information about the first 5 values:
 http://msdn.microsoft.com/en-us/library/bb762153(VS.85).aspx
-
-// It is forbidden that the AutoRun calls its own creator (the SFX again).
 
 
 (C) 2010 ViaThinkSoft

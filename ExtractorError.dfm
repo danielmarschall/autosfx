@@ -1,11 +1,9 @@
 object ErrorForm: TErrorForm
   Left = 222
   Top = 133
-  BorderIcons = [biSystemMenu]
-  BorderStyle = bsSingle
   Caption = 'Fehler'
-  ClientHeight = 365
-  ClientWidth = 355
+  ClientHeight = 363
+  ClientWidth = 353
   Color = clBtnFace
   Font.Charset = ANSI_CHARSET
   Font.Color = clWindowText
@@ -14,6 +12,7 @@ object ErrorForm: TErrorForm
   Font.Style = []
   OldCreateOrder = False
   Position = poMainFormCenter
+  OnResize = FormResize
   PixelsPerInch = 96
   TextHeight = 13
   object ErrorImg: TImage
@@ -814,5 +813,21 @@ object ErrorForm: TErrorForm
     ModalResult = 1
     ParentFont = False
     TabOrder = 1
+  end
+  object SaveBtn: TButton
+    Left = 64
+    Top = 328
+    Width = 97
+    Height = 25
+    Caption = 'Liste speichern'
+    TabOrder = 2
+    OnClick = SaveBtnClick
+  end
+  object SaveDialog: TSaveDialog
+    DefaultExt = '.txt'
+    Filter = 'Textdateien (*.txt)|*.txt|Alle Dateien (*.*)|*.*'
+    Options = [ofOverwritePrompt, ofHideReadOnly, ofPathMustExist, ofEnableSizing]
+    Left = 320
+    Top = 8
   end
 end
