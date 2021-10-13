@@ -1,3 +1,4 @@
+
 VIATHINKSOFT AUTOSFX
 ====================
 
@@ -91,16 +92,13 @@ determinated.
 Special AutoRun.inf
 -------------------
 
-[AutoSFX]
-Operation=open			; Part of ShellExecute. Usually 'open' or 'runass' (e.g. for admin privilegies)
-FileName=AutoRun.exe		; The filename to be executed
-Parameters=			; Optional parameters
-Directory=			; Optional Working directory
-ShowCmd=			; (See MSDN Reference) Usually WS_NORMAL or WS_HIDE
-OpenUnzippedContent=true	; After we have opened the application, should we still show the extracted data in Windows Explorer? (Default behavior if not AutoRun is set)
+    [AutoSFX]
+    Operation=open			; Part of ShellExecute. Usually 'open' or 'runass' (e.g. for admin privilegies)
+    FileName=AutoRun.exe		; The filename to be executed
+    Parameters=			; Optional parameters
+    Directory=			; Optional Working directory
+    ShowCmd=			; (See MSDN Reference) Usually WS_NORMAL or WS_HIDE
+    OpenUnzippedContent=true	; After we have opened the application, should we still show the extracted data in Windows Explorer? (Default behavior if not AutoRun is set)
 
 More information about the first 5 values:
 http://msdn.microsoft.com/en-us/library/bb762153(VS.85).aspx
-
-
-(C) 2010 ViaThinkSoft
