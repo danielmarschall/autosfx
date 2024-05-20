@@ -189,7 +189,7 @@ begin
   begin
     od := TOpenDialog.Create(nil);
     try
-      od.DefaultExt := '.zip';
+      od.DefaultExt := 'zip';
       od.Filter := 'ZIP-Archiv (*.zip)|*.zip|Alle Dateien (*.*)|*.*';
       od.Options := [ofAllowMultiSelect, ofFileMustExist, ofHideReadOnly,
         ofPathMustExist, ofEnableSizing];
