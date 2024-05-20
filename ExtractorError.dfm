@@ -824,7 +824,7 @@ object ErrorForm: TErrorForm
     OnClick = SaveBtnClick
   end
   object SaveDialog: TSaveDialog
-    DefaultExt = '.txt'
+    DefaultExt = 'txt'
     Filter = 'Textdateien (*.txt)|*.txt|Alle Dateien (*.*)|*.*'
     Options = [ofOverwritePrompt, ofHideReadOnly, ofPathMustExist, ofEnableSizing]
     Left = 320
