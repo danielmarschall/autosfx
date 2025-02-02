@@ -1,5 +1,5 @@
 
-VIATHINKSOFT AUTOSFX
+ViaThinkSoft AutoSFX
 ====================
 
 Benefits
@@ -50,15 +50,14 @@ Process
 Behavior
 --------
 
-ZIP has 1 file
-	=> Extract DIRECTLY in the specified directory
-	Is it a directory?
-		=> Open the new directory in Windows Explorer
-	is it a file?
-		=> Open Windows Explorer and select the new file.
-ZIP has 2+ files
-	=> Create a directory with the name of the SFX and extract into it
-	=> Open the new created directory in Windows Explorer
+ZIP has 1 file:
+	* Extract DIRECTLY in the specified directory
+	* Is it a directory? Then open the new directory in Windows Explorer
+	* is it a file? Then open Windows Explorer and select the new file.
+		
+ZIP has 2+ files:
+	* Create a directory with the name of the SFX and extract into it
+	* Open the new created directory in Windows Explorer
 
 Semantic archive comment
 ------------------------
@@ -69,6 +68,7 @@ ZIP files.
 
 Following switches are possible:
 
+```
   C_ASFX_CB_OVR = 'AutoSFX Conflict Behavior: Overwrite all';
   C_ASFX_CB_NEW = 'AutoSFX Conflict Behavior: Overwrite older';
   C_ASFX_CB_ASK = 'AutoSFX Conflict Behavior: Ask';
@@ -81,6 +81,7 @@ Following switches are possible:
   C_ASFX_FC_THS = 'AutoSFX Extraction Target: Extract here'; (default)
   C_ASFX_FC_DSK = 'AutoSFX Extraction Target: Extract to Desktop';
   C_ASFX_FC_ASK = 'AutoSFX Extraction Target: Choose directory';
+```
 
 Note: If you are running the SFX from a CD-Rom, a write-protected
 directory or a flobby (doesn't matter if it is write-protected!),
@@ -92,6 +93,7 @@ determinated.
 Special AutoRun.inf
 -------------------
 
+```
     [AutoSFX]
     Operation=open			; Part of ShellExecute. Usually 'open' or 'runass' (e.g. for admin privilegies)
     FileName=AutoRun.exe		; The filename to be executed
@@ -99,6 +101,7 @@ Special AutoRun.inf
     Directory=			; Optional Working directory
     ShowCmd=			; (See MSDN Reference) Usually WS_NORMAL or WS_HIDE
     OpenUnzippedContent=true	; After we have opened the application, should we still show the extracted data in Windows Explorer? (Default behavior if not AutoRun is set)
+```
 
 More information about the first 5 values:
 http://msdn.microsoft.com/en-us/library/bb762153(VS.85).aspx
